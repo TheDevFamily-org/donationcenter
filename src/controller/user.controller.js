@@ -9,7 +9,8 @@ export const deleteUser = async (req, res, next) => {
     if (req.userId !== user._id.toString()) {
       return next(createError(403, "Your are not authenticated!"));
     }
-    await User.findByIdAndDelete(req.params.id);
+    await User.findByIdAndDelete(req.params.id); 
+    console.log(req);
     res.status(200).send("deleted.");
   } catch (err) {
     next(err);
