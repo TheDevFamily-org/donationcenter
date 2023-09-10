@@ -20,6 +20,11 @@ const userSchema = new Schema(
     },
     phone: String,
     address: String,
+    userType: {
+      type: String,
+      enum: ['type1', 'type2'],
+      default: 'type1',
+    },
     isAdmin: {
       type: Boolean,
       default: false,

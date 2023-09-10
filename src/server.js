@@ -6,6 +6,7 @@ import cors from 'cors';
 
 import userRoute from "./routes/user.route.js";
 import authRoute from "./routes/auth.route.js";
+import campaignRoute from './routes/campaign.route.js';
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(cookieParser());
 
 app.use("/api/users", userRoute);
 app.use("/api/auth", authRoute);
+app.use('/api/campaign', campaignRoute);
 
 app.use((err, req, res, next)=>{
   const errorStatus = err.status || 500;

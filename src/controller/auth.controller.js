@@ -165,7 +165,6 @@ export const resetpassword = async (req, res, next) => {
 };
 
 export const updatepassword = async (req, res, next) => {
-  // const email = req.body.email
   const oldPass = req.body.oldPassword;
   const newPass = req.body.newPassword;
   try {
