@@ -6,38 +6,6 @@ import createError from "../utils/createError.js";
 import { EMAIL, EMAIL_PASSWORD } from "../config/config.js";
 import NodeMailer from "nodemailer";
 
-// const SendEmailResetPasswordEmail = (name, email, token) => {
-//   try {
-//     const transporter = NodeMailer.createTransport({
-//       host: "smtp.gmail.com",
-//       port: 587,
-//       secure: false,
-//       requireTLS: true,
-//       auth: {
-//         user: EMAIL,
-//         pass: EMAIL_PASSWORD,
-//       },
-//     });
-//     const mailOption = {
-//       from: EMAIL,
-//       to: email,
-//       subject: "For Reset Password",
-//       html:
-//         "<p> Hi" +
-//         name +
-//         ', Please copy the click and <a href="http://localhost:5000/auth/resetpassword?token=' +
-//         token +
-//         '">reset you password</a>',
-//     };
-//     transporter.sendMail(mailOption, function (err, info) {
-//       err
-//         ? console.log(err.message)
-//         : console.log("Mail has been sent:-", info.response);
-//     });
-//   } catch (err) {
-//     res.status(400).send(err.message);
-//   }
-// };
 
 export const register = async (req, res, next) => {
   try {
