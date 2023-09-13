@@ -94,7 +94,7 @@ export const forgotpassword = async (req, res, next) => {
   });
 
   const mailOptions = {
-    from: "aa17262211@gmail.com",
+    from: EMAIL,
     to: email,
     subject: "Reset your password",
     text: `Your OTP to reset your password is ${otpToken}. This OTP is valid for 12 hours.`,

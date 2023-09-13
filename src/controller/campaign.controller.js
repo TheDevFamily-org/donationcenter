@@ -106,3 +106,13 @@ export const closecampaign = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getCampaign = async (req, res, next) => {
+  try {
+    const _id = req.params.id;
+    const campaign = await Campaign.findOne({_id});
+    res.status(200).send(campaign);
+  } catch (err) {
+    next(err);
+  }
+};
