@@ -17,25 +17,20 @@ export const intent = async (req, res, next) => {
     },
   });
   const token = req.cookies.accessToken;
-  var newDonation;
+  let newDonation = new Donation({
+    amount: 50,
+    campaign: req.params.campaignId,
+    transactionId : paymentIntent.id,
+  });
   if (token) {
-    jwt.verify(token, JWT_KEY, async (err, payload) => {
-      if (err) return next(createError(403, "Token is not valid"));
-      req.userId = payload.id;
-      req.isAdmin = payload.isAdmin;
-    });
-    newDonation = new Donation({
-      amount: 50,
-      user: req.userId,
-      campaign: req.params.campaignId,
-      transactionId : paymentIntent.id,
-    });
-  } else {
-    newDonation = new Donation({
-      amount: 50,
-      campaign: req.params.campaignId,
-      transactionId : paymentIntent.id,
-    });
+    try {
+      const decoded = jwt.verify(token, JWT_KEY);
+      req.userId = decoded.id;
+      req.isAdmin = decoded.isAdmin;
+      newDonation.user = req.userId; // Assign the user field
+    } catch (err) {
+      return next(createError(403, "Token is not valid"));
+    }
   }
 
   try {
