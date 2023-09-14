@@ -11,6 +11,8 @@ export const verifyToken = (req, res, next) => {
     if (err) return next(createError(403, "Token is not valid"));
     req.userId = payload.id;
     req.isAdmin = payload.isAdmin;
+    req.freeTrail = payload.freeTrail,
+    req.subscription = payload.subscription,
     next();
   });
 };

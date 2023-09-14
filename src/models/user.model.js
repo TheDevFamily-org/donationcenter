@@ -29,6 +29,8 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    subscription:Boolean,
+    freeTrail:Boolean,
     resetToken: {
       type: String,
       default: "",

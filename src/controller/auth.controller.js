@@ -6,13 +6,16 @@ import createError from "../utils/createError.js";
 import { EMAIL, EMAIL_PASSWORD } from "../config/config.js";
 import NodeMailer from "nodemailer";
 
-
 export const register = async (req, res, next) => {
   try {
+    const email = req.body.email;
+    const user = await User.find({ email });
+    if (user) return next(createError(409, "User is already exist"));
     const hash = bcrypt.hashSync(req.body.password, 10);
     const newUser = new User({
       ...req.body,
       password: hash,
+      freeTrail: true,
     });
 
     await newUser.save();
@@ -20,12 +23,14 @@ export const register = async (req, res, next) => {
       {
         id: newUser._id,
         isAdmin: newUser.isAdmin,
+        freeTrail: newUser.freeTrail,
+        subscription: newUser.subscription,
       },
       JWT_KEY
     );
 
     const { password, ...info } = newUser._doc;
-    
+
     res.cookie("accessToken", token, { httpOnly: true }).status(200).send(info);
     // res.status(201).send("User has been created");
   } catch (err) {
@@ -37,7 +42,18 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const user = await User.findOne({ email: req.body.email });
-    if (!user) return next(createError(404, "User not Found"));
+    if (!user) {
+      return next(createError(404, "User not Found"));
+    } else {
+      const userCreatedAt = new Date(user.createdAt);
+      const currentDate = new Date();
+      const timeDifference = currentDate - userCreatedAt;
+      const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+
+      if(daysDifference > 4){
+        console.log("user's free trail has expired");
+      }
+    }
 
     const isCorrect = bcrypt.compareSync(req.body.password, user.password);
     if (!isCorrect) return next(createError(404, "Wrong password or username"));
@@ -46,12 +62,14 @@ export const login = async (req, res, next) => {
       {
         id: user._id,
         isAdmin: user.isAdmin,
+        freeTrail: user.freeTrail,
+        subscription: user.subscription,
       },
       JWT_KEY
     );
 
     const { password, ...info } = user._doc;
-    
+
     res.cookie("accessToken", token, { httpOnly: true }).status(200).send(info);
   } catch (err) {
     next(err);
@@ -115,8 +133,8 @@ export const forgotpassword = async (req, res, next) => {
 export const resetpassword = async (req, res, next) => {
   const otp = req.body.otp;
   try {
-    const user = await User.findOne({ resetToken:otp });
-    
+    const user = await User.findOne({ resetToken: otp });
+
     if (!user) {
       return next(createError(404, "Invalid or expired reset token."));
     }
@@ -136,8 +154,8 @@ export const updatepassword = async (req, res, next) => {
   const oldPass = req.body.oldPassword;
   const newPass = req.body.newPassword;
   try {
-    const user = await User.findOne({ _id:req.userId });
-    
+    const user = await User.findOne({ _id: req.userId });
+
     if (!user) {
       return next(createError(401, "Unauthorized"));
     }

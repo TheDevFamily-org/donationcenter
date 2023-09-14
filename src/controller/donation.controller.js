@@ -1,10 +1,21 @@
-import Donation from "../models/donation.model";
-import createError from "../utils/createError";
+import Donation from "../models/donation.model.js";
 import createError from "../utils/createError.js";
 import jwt from "jsonwebtoken";
 import { JWT_KEY } from "../config/config.js";
+import Stripe from "stripe";
+import { STRIPE } from "../config/config.js";
 
-const createDonation = async (req, res, next) => {
+export const intent = async (req, res, next) => {
+  const stripe = new Stripe(STRIPE);
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: 50 * 100,
+    currency: "usd",
+
+    automatic_payment_methods: {
+      enabled: true,
+    },
+  });
   const token = req.cookies.accessToken;
   var newDonation;
   if (token) {
@@ -14,22 +25,22 @@ const createDonation = async (req, res, next) => {
       req.isAdmin = payload.isAdmin;
     });
     newDonation = new Donation({
-      amount : 50,
-      user:userId,
-      campaign:req.body.campaign,
-
-    })
-  }
-  else{
+      amount: 50,
+      user: req.userId,
+      campaign: req.params.campaignId,
+      transactionId : paymentIntent.id,
+    });
+  } else {
     newDonation = new Donation({
-      amount : 50,
-      campaign:req.body.campaign,
-    })
+      amount: 50,
+      campaign: req.params.campaignId,
+      transactionId : paymentIntent.id,
+    });
   }
 
   try {
     const savedDonation = await newDonation.save();
-    res.status(201).send(savedDonation);
+    res.status(201).send({clientSecret:paymentIntent.client_secret});
   } catch (err) {
     next(err);
   }
