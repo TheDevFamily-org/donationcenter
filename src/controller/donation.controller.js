@@ -4,8 +4,9 @@ import jwt from "jsonwebtoken";
 import { JWT_KEY } from "../config/config.js";
 import Stripe from "stripe";
 import { STRIPE } from "../config/config.js";
+import User from '../models/user.model.js';
 
-export const intent = async (req, res, next) => {
+export const createDonation = async (req, res, next) => {
   const stripe = new Stripe(STRIPE);
 
   const paymentIntent = await stripe.paymentIntents.create({
@@ -35,6 +36,10 @@ export const intent = async (req, res, next) => {
 
   try {
     const savedDonation = await newDonation.save();
+    const donation = await Donation.findOneAndUpdate(
+      { transactionId: paymentIntent.id },
+      { $set: { isCompleted:true}}, { new: true }
+    );
     res.status(201).send({clientSecret:paymentIntent.client_secret});
   } catch (err) {
     next(err);

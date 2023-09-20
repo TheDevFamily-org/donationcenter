@@ -16,6 +16,7 @@ const donationSchema = Schema({
     ref: "Campaign",
     // required: true,
   },
+  isCompleted:Boolean,
   transactionId: {
     type: String,
     // required: true,

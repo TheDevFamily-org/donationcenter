@@ -26,7 +26,8 @@ const campaignSchema = new Schema({
   },
   milestones: String,
   currentProgress: String,
-  images: [String], // Array of image URLs
+  milimg:String,
+  proimg:String, // Array of image URLs
   closeCampaign: {
     type: Boolean,
     default: false,

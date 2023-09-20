@@ -8,9 +8,6 @@ import NodeMailer from "nodemailer";
 
 export const register = async (req, res, next) => {
   try {
-    const email = req.body.email;
-    const user = await User.find({ email });
-    if (user) return next(createError(409, "User is already exist"));
     const hash = bcrypt.hashSync(req.body.password, 10);
     const newUser = new User({
       ...req.body,
@@ -44,17 +41,7 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
       return next(createError(404, "User not Found"));
-    } else {
-      const userCreatedAt = new Date(user.createdAt);
-      const currentDate = new Date();
-      const timeDifference = currentDate - userCreatedAt;
-      const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-
-      if(daysDifference > 4){
-        console.log("user's free trail has expired");
-      }
-    }
-
+    } 
     const isCorrect = bcrypt.compareSync(req.body.password, user.password);
     if (!isCorrect) return next(createError(404, "Wrong password or username"));
 
