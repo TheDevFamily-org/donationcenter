@@ -6,45 +6,13 @@ import createError from "../utils/createError.js";
 import { EMAIL, EMAIL_PASSWORD } from "../config/config.js";
 import NodeMailer from "nodemailer";
 
-// const SendEmailResetPasswordEmail = (name, email, token) => {
-//   try {
-//     const transporter = NodeMailer.createTransport({
-//       host: "smtp.gmail.com",
-//       port: 587,
-//       secure: false,
-//       requireTLS: true,
-//       auth: {
-//         user: EMAIL,
-//         pass: EMAIL_PASSWORD,
-//       },
-//     });
-//     const mailOption = {
-//       from: EMAIL,
-//       to: email,
-//       subject: "For Reset Password",
-//       html:
-//         "<p> Hi" +
-//         name +
-//         ', Please copy the click and <a href="http://localhost:5000/auth/resetpassword?token=' +
-//         token +
-//         '">reset you password</a>',
-//     };
-//     transporter.sendMail(mailOption, function (err, info) {
-//       err
-//         ? console.log(err.message)
-//         : console.log("Mail has been sent:-", info.response);
-//     });
-//   } catch (err) {
-//     res.status(400).send(err.message);
-//   }
-// };
-
 export const register = async (req, res, next) => {
   try {
     const hash = bcrypt.hashSync(req.body.password, 10);
     const newUser = new User({
       ...req.body,
       password: hash,
+      freeTrail: true,
     });
 
     await newUser.save();
@@ -52,12 +20,14 @@ export const register = async (req, res, next) => {
       {
         id: newUser._id,
         isAdmin: newUser.isAdmin,
+        freeTrail: newUser.freeTrail,
+        subscription: newUser.subscription,
       },
       JWT_KEY
     );
 
     const { password, ...info } = newUser._doc;
-    
+
     res.cookie("accessToken", token, { httpOnly: true }).status(200).send(info);
     // res.status(201).send("User has been created");
   } catch (err) {
@@ -69,8 +39,9 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const user = await User.findOne({ email: req.body.email });
-    if (!user) return next(createError(404, "User not Found"));
-
+    if (!user) {
+      return next(createError(404, "User not Found"));
+    } 
     const isCorrect = bcrypt.compareSync(req.body.password, user.password);
     if (!isCorrect) return next(createError(404, "Wrong password or username"));
 
@@ -78,12 +49,14 @@ export const login = async (req, res, next) => {
       {
         id: user._id,
         isAdmin: user.isAdmin,
+        freeTrail: user.freeTrail,
+        subscription: user.subscription,
       },
       JWT_KEY
     );
 
     const { password, ...info } = user._doc;
-    
+
     res.cookie("accessToken", token, { httpOnly: true }).status(200).send(info);
   } catch (err) {
     next(err);
@@ -126,7 +99,7 @@ export const forgotpassword = async (req, res, next) => {
   });
 
   const mailOptions = {
-    from: "aa17262211@gmail.com",
+    from: EMAIL,
     to: email,
     subject: "Reset your password",
     text: `Your OTP to reset your password is ${otpToken}. This OTP is valid for 12 hours.`,
@@ -147,8 +120,8 @@ export const forgotpassword = async (req, res, next) => {
 export const resetpassword = async (req, res, next) => {
   const otp = req.body.otp;
   try {
-    const user = await User.findOne({ resetToken:otp });
-    
+    const user = await User.findOne({ resetToken: otp });
+
     if (!user) {
       return next(createError(404, "Invalid or expired reset token."));
     }
@@ -168,8 +141,8 @@ export const updatepassword = async (req, res, next) => {
   const oldPass = req.body.oldPassword;
   const newPass = req.body.newPassword;
   try {
-    const user = await User.findOne({ _id:req.userId });
-    
+    const user = await User.findOne({ _id: req.userId });
+
     if (!user) {
       return next(createError(401, "Unauthorized"));
     }

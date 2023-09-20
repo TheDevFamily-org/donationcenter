@@ -25,9 +25,22 @@ const userSchema = new Schema(
       enum: ['type1', 'type2'],
       default: 'type1',
     },
+    status: {
+      type: String,
+      enum: ['bloked', 'active'],
+      default: 'active',
+    },
     isAdmin: {
       type: Boolean,
       default: false,
+    },
+    subscription:{
+      type: Boolean,
+      default: false,
+    },
+    freeTrail:{
+      type: Boolean,
+      default: true,
     },
     resetToken: {
       type: String,
