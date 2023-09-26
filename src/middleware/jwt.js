@@ -13,6 +13,7 @@ export const verifyToken = (req, res, next) => {
     req.isAdmin = payload.isAdmin;
     req.freeTrail = payload.freeTrail,
     req.subscription = payload.subscription,
+    req.userType = payload.userType,
     next();
   });
 };

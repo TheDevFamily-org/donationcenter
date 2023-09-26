@@ -18,33 +18,56 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    phone: String,
-    address: String,
+    phone: {
+      type: String,
+      required: function() {
+        return this.userType === 'Recipient';
+      },
+    },
+    address: {
+      type: String,
+      required: function() {
+        return this.userType === 'Recipient';
+      },
+    },
     userType: {
       type: String,
-      enum: ['type1', 'type2'],
-      default: 'type1',
+      enum: ['Donor', 'Recipient'],
+      required: true,
     },
     status: {
       type: String,
-      enum: ['bloked', 'active'],
-      default: 'active',
+      enum: ['blocked', 'active', 'non-active'],
+      default: 'non-active',
     },
     isAdmin: {
       type: Boolean,
       default: false,
     },
-    subscription:{
+    subscription: {
       type: Boolean,
       default: false,
     },
-    freeTrail:{
+    freeTrail: {
       type: Boolean,
       default: true,
     },
     resetToken: {
       type: String,
       default: "",
+    },
+    profilePicture: String, // Store URL or file path for profile picture
+    recipientType: {
+      type: String,
+      required: function() {
+        return this.userType === 'Recipient';
+      },
+    },
+    donationType: {
+      type: String,
+      required: function() {
+        return this.userType === 'Recipient';
+      },
     },
   },
   {

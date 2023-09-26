@@ -5,34 +5,101 @@ import { JWT_KEY } from "../config/config.js";
 import createError from "../utils/createError.js";
 import { EMAIL, EMAIL_PASSWORD } from "../config/config.js";
 import NodeMailer from "nodemailer";
+import sendActivationEmail from '../utils/email.js';
 
-export const register = async (req, res, next) => {
+export const registerAsRecipient = async (req, res, next) => {
   try {
     const hash = bcrypt.hashSync(req.body.password, 10);
+    const verificationToken = jwt.sign({}, JWT_KEY, { expiresIn: '1d' }); // Generate a verification token
+
     const newUser = new User({
       ...req.body,
       password: hash,
       freeTrail: true,
+      isAdmin : true,
+      resetToken: verificationToken, // Save the verification token to resetToken field
     });
 
     await newUser.save();
-    const token = jwt.sign(
+
+    // Send activation email
+    sendActivationEmail(newUser, verificationToken);
+
+    // Generate access token
+    const accessToken = jwt.sign(
       {
         id: newUser._id,
         isAdmin: newUser.isAdmin,
         freeTrail: newUser.freeTrail,
         subscription: newUser.subscription,
+        userType : newUser.userType,
       },
       JWT_KEY
     );
 
-    const { password, ...info } = newUser._doc;
+    // Set the access token in a cookie
+    res.cookie('accessToken', accessToken, { httpOnly: true });
 
-    res.cookie("accessToken", token, { httpOnly: true }).status(200).send(info);
-    // res.status(201).send("User has been created");
+    res.status(201).send('User has been created. Please check your email for activation instructions.');
   } catch (err) {
     next(err);
-    // res.status(500).send("Something went wrong: " + err.message);
+  }
+};
+export const registerAsDonor = async (req, res, next) => {
+  try {
+    const hash = bcrypt.hashSync(req.body.password, 10);
+    const verificationToken = jwt.sign({}, JWT_KEY, { expiresIn: '1d' }); // Generate a verification token
+
+    const newUser = new User({
+      ...req.body,
+      password: hash,
+      resetToken: verificationToken, // Save the verification token to resetToken field
+    });
+
+    await newUser.save();
+
+    // Send activation email
+    sendActivationEmail(newUser, verificationToken);
+
+    // Generate access token
+    const accessToken = jwt.sign(
+      {
+        id: newUser._id,
+        isAdmin: newUser.isAdmin,
+        freeTrail: newUser.freeTrail,
+        subscription: newUser.subscription,
+        userType : newUser.userType,
+      },
+      JWT_KEY
+    );
+
+    // Set the access token in a cookie
+    res.cookie('accessToken', accessToken, { httpOnly: true });
+
+    res.status(201).send('User has been created. Please check your email for activation instructions.');
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const activateAccount = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+
+    // Find the user with the corresponding activation token
+    const user = await User.findOneAndUpdate({ resetToken: token }, { resetToken: '' });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid activation token.' });
+    }
+
+    // Activate the user account
+    user.status = 'active';
+    await user.save();
+
+    res.status(200).json({ message: 'Account activated successfully.' });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -41,7 +108,7 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
       return next(createError(404, "User not Found"));
-    } 
+    }
     const isCorrect = bcrypt.compareSync(req.body.password, user.password);
     if (!isCorrect) return next(createError(404, "Wrong password or username"));
 
